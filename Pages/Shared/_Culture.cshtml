@@ -1,0 +1,38 @@
+﻿@using Microsoft.AspNetCore.Localization
+@using Microsoft.Extensions.Options
+@inject IOptions<RequestLocalizationOptions> _localizationOptions;
+
+@{
+    // Retrieve the current culture settings for the request
+    var requestCulture = Context.Features.Get<IRequestCultureFeature>();
+
+    // Generate a list of supported UI cultures for the culture selection dropdown
+    var cultureItems = _localizationOptions.Value.SupportedUICultures?
+        .Select(culture => new SelectListItem { Value = culture.Name, Text = culture.DisplayName })
+        .ToList();
+
+    // Determine the return URL, preserving the current path and query string
+    var returnUrl = string.IsNullOrEmpty(Context.Request.Path)
+    ? "~/"
+    : $"~{Context.Request.Path.Value}{Context.Request.QueryString}";
+}
+
+<div>
+    <!--
+        Culture selection form for localization.
+        This form allows users to select their preferred language from a dropdown list.
+        When a language is selected, the form automatically submits to set the selected
+        culture in a cookie via the CultureController's SetCulture action.
+
+        - asp-controller: Specifies the controller that will handle the form submission.
+        - asp-action: Specifies the action method in the controller to process the selected culture.
+        - asp-route-returnUrl: Passes the current URL as the return URL, so the user remains on the same page after setting the culture.
+    -->
+    <form asp-controller="Culture" method="post" asp-action="SetCulture" asp-route-returnUrl="@returnUrl" class="form-horizontal nav-link text-dark ml-auto">
+        <select name="culture"
+            onchange="this.form.submit();"
+            asp-for="@requestCulture!.RequestCulture.UICulture.Name"
+            asp-items="cultureItems" class="form-select">
+            </select>
+    </form>
+</div>
